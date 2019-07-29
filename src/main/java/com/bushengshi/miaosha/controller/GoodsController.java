@@ -27,7 +27,7 @@ public class GoodsController {
     RedisService redisService;
 
 
-    @RequestMapping("/to_list")
+    /*@RequestMapping("/to_list")
     public String toList(Model model, HttpServletResponse response,
                          @CookieValue(value = MiaoshaUserService.COOKIE_NAME_TOKEN, required = false) String cookieToken,
                          //RequestParam获取 token 为了兼容手机端
@@ -41,7 +41,22 @@ public class GoodsController {
         MiaoshaUser user = userService.getByToken(response, token);
         model.addAttribute("user", user);
         return "goods_list";
+    }*/
+
+    @RequestMapping("/to_list")
+    public String toList(Model model, HttpServletResponse response, MiaoshaUser user) {
+        model.addAttribute("user", user);
+        return "goods_list";
     }
 
+    @RequestMapping("/to_detail")
+    public String toDetail(Model model, HttpServletResponse response,
+                           @CookieValue(value = MiaoshaUserService.COOKIE_NAME_TOKEN, required = false) String cookieToken,
+                           //RequestParam获取 token 为了兼容手机端
+                           @RequestParam(value = MiaoshaUserService.COOKIE_NAME_TOKEN, required = false) String paramToken
+    ) {
 
+
+        return null;
+    }
 }
