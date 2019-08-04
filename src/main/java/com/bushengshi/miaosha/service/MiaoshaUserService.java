@@ -56,7 +56,8 @@ public class MiaoshaUserService {
         }
 
         //登录成功之后的操作
-        addCookie(response, user);
+        String token = UUIDUtil.uuid();
+        addCookie(response, token, user);
 
         //return CodeMsg.SUCCESS;
         return true;
@@ -70,18 +71,17 @@ public class MiaoshaUserService {
         MiaoshaUser user = redisService.get(MiaoshaUserKey.token, token, MiaoshaUser.class);
         //延长有效期
         if (user != null) {
-            addCookie(response, user);
+            addCookie(response, token, user);
         }
 
         return user;
     }
 
-    private void addCookie(HttpServletResponse response, MiaoshaUser user) {
-        //生成 cookie
-        String token = UUIDUtil.uuid();
+    private void addCookie(HttpServletResponse response, String token, MiaoshaUser user) {
         redisService.set(MiaoshaUserKey.token, token, user);
         Cookie cookie = new Cookie(COOKIE_NAME_TOKEN, token);
         cookie.setMaxAge(MiaoshaUserKey.token.expireSeconds());
+//        cookie.setMaxAge(5);
         cookie.setPath("/");
         response.addCookie(cookie);
     }
