@@ -1,6 +1,7 @@
 package com.bushengshi.miaosha.controller;
 
 import com.bushengshi.miaosha.domain.MiaoshaUser;
+import com.bushengshi.miaosha.redis.GoodsKey;
 import com.bushengshi.miaosha.redis.RedisService;
 import com.bushengshi.miaosha.service.GoodsService;
 import com.bushengshi.miaosha.service.MiaoshaUserService;
@@ -8,14 +9,15 @@ import com.bushengshi.miaosha.vo.GoodsVo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.thymeleaf.spring4.context.SpringWebContext;
+import org.thymeleaf.spring4.view.ThymeleafViewResolver;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -33,6 +35,12 @@ public class GoodsController {
     @Autowired
     GoodsService goodsService;
 
+    @Autowired
+    ThymeleafViewResolver thymeleafViewResolver;
+
+    @Autowired
+    ApplicationContext applicationContext;
+
     /*@RequestMapping("/to_list")
     public String toList(Model model, HttpServletResponse response,
                          @CookieValue(value = MiaoshaUserService.COOKIE_NAME_TOKEN, required = false) String cookieToken,
@@ -49,15 +57,34 @@ public class GoodsController {
         return "goods_list";
     }*/
 
-    @RequestMapping("/to_list")
-    public String toList(Model model, HttpServletResponse response, MiaoshaUser user) {
+    @RequestMapping(value = "/to_list", produces = "text/html")
+    @ResponseBody
+    public String toList(Model model, HttpServletRequest request, HttpServletResponse response, MiaoshaUser user) {
         //用argumentResolver来给 controller 的参数赋值,以此将通过 cookie 取 user 的方法分离出去
         model.addAttribute("user", user);
         //查询商品列表
         List<GoodsVo> goodsList = goodsService.listGoodsVo();
         model.addAttribute("goodsList", goodsList);
 
-        return "goods_list";
+        //return "goods_list";
+
+        //增加页面缓存
+        //取缓存
+        String html = redisService.get(GoodsKey.getGoodsList, "", String.class);
+        if (!StringUtils.isEmpty(html)) {
+            return html;
+        }
+
+        //手动渲染
+        SpringWebContext ctx = new SpringWebContext(request, response, request.getServletContext(),
+                request.getLocale(), model.asMap(), applicationContext);
+        html = thymeleafViewResolver.getTemplateEngine().process("goods_list", ctx);
+        if (!StringUtils.isEmpty(html)) {
+            //有效期不能太长，一般60秒
+            redisService.set(GoodsKey.getGoodsList,"",html);
+        }
+
+        return html;
     }
 
     @RequestMapping("/to_detail/{goodsId}")
@@ -88,7 +115,6 @@ public class GoodsController {
 
         model.addAttribute("miaoshaStatus", miaoshaStatus);
         model.addAttribute("remainSeconds", remainSeconds);
-
 
 
         return "goods_detail";
