@@ -28,7 +28,40 @@ public class MiaoshaUserService {
     RedisService redisService;
 
     public MiaoshaUser getById(long id) {
-        return miaoshaUserDao.getById(id);
+        //取缓存
+        MiaoshaUser user = redisService.get(MiaoshaUserKey.getById, "" + id, MiaoshaUser.class);
+        if (user != null) {
+            return user;
+        }
+        //取数据库
+        user = miaoshaUserDao.getById(id);
+        if (user != null) {
+            redisService.set(MiaoshaUserKey.getById, "" + id, user);
+        }
+        return user;
+    }
+
+    //对象级缓存
+    /*
+     *在一个 service 中不要直接调用另一个 service对应的 dao 中的方法，而是应该调用 service 中的方法，
+     *因为在 service 的方法中可能会有对缓存的处理
+     */
+    public boolean updatePassword(String token, long id, String passwordNew) {
+        //取user
+        MiaoshaUser user = getById(id);
+        if (user == null) {
+            throw new GlobalException(CodeMsg.MOBILE_NOT_EXIST);
+        }
+        //更新数据库
+        MiaoshaUser toBeUpdate = new MiaoshaUser();
+        toBeUpdate.setId(id);
+        toBeUpdate.setPassword(MD5Util.fromPassToDBPass(passwordNew, user.getSalt()));
+        miaoshaUserDao.update(toBeUpdate);
+        //处理缓存（修改密码一定记得处理缓存）
+        redisService.delete(MiaoshaUserKey.getById, "" + id);
+        user.setPassword(MD5Util.fromPassToDBPass(passwordNew, user.getSalt()));
+        redisService.set(MiaoshaUserKey.token, token, user);
+        return true;
     }
 
     public String login(HttpServletResponse response, LoginVo loginVo) {
