@@ -57,16 +57,15 @@ public class GoodsController {
         return "goods_list";
     }*/
 
+
+    /*
+     * 页面级缓存
+     * */
     @RequestMapping(value = "/to_list", produces = "text/html")
     @ResponseBody
     public String toList(Model model, HttpServletRequest request, HttpServletResponse response, MiaoshaUser user) {
         //用argumentResolver来给 controller 的参数赋值,以此将通过 cookie 取 user 的方法分离出去
         model.addAttribute("user", user);
-        //查询商品列表
-        List<GoodsVo> goodsList = goodsService.listGoodsVo();
-        model.addAttribute("goodsList", goodsList);
-
-        //return "goods_list";
 
         //增加页面缓存
         //取缓存
@@ -75,23 +74,41 @@ public class GoodsController {
             return html;
         }
 
+        //查询商品列表
+        List<GoodsVo> goodsList = goodsService.listGoodsVo();
+        model.addAttribute("goodsList", goodsList);
+
+        //return "goods_list";
+
         //手动渲染
         SpringWebContext ctx = new SpringWebContext(request, response, request.getServletContext(),
                 request.getLocale(), model.asMap(), applicationContext);
         html = thymeleafViewResolver.getTemplateEngine().process("goods_list", ctx);
         if (!StringUtils.isEmpty(html)) {
             //有效期不能太长，一般60秒
-            redisService.set(GoodsKey.getGoodsList,"",html);
+            redisService.set(GoodsKey.getGoodsList, "", html);
         }
 
         return html;
     }
 
-    @RequestMapping("/to_detail/{goodsId}")
-    public String toDetail(Model model, HttpServletResponse response, MiaoshaUser user,
+    /*
+     * URL级缓存(和页面级缓存的区别是带个参数，不同页面有不同详情)
+     * */
+    @RequestMapping(value = "/to_detail/{goodsId}", produces = "text/html")
+    @ResponseBody
+    public String toDetail(Model model, HttpServletRequest request, HttpServletResponse response, MiaoshaUser user,
                            @PathVariable("goodsId") long goodsId) {
 
         model.addAttribute("user", user);
+
+        //增加页面缓存
+        //取缓存
+        String html = redisService.get(GoodsKey.getGoodsDetail, "" + goodsId, String.class);
+        if (!StringUtils.isEmpty(html)) {
+            return html;
+        }
+
         GoodsVo goods = goodsService.getGoodsVoByGoodsId(goodsId);
         model.addAttribute("goods", goods);
 
@@ -116,7 +133,17 @@ public class GoodsController {
         model.addAttribute("miaoshaStatus", miaoshaStatus);
         model.addAttribute("remainSeconds", remainSeconds);
 
+//        return "goods_detail";
 
-        return "goods_detail";
+        //手动渲染
+        SpringWebContext ctx = new SpringWebContext(request, response, request.getServletContext(),
+                request.getLocale(), model.asMap(), applicationContext);
+        html = thymeleafViewResolver.getTemplateEngine().process("goods_detail", ctx);
+        if (!StringUtils.isEmpty(html)) {
+            //有效期不能太长，一般60秒
+            redisService.set(GoodsKey.getGoodsDetail, "" + goodsId, html);
+        }
+
+        return html;
     }
 }
