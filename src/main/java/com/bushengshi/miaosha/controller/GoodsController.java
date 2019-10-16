@@ -3,8 +3,10 @@ package com.bushengshi.miaosha.controller;
 import com.bushengshi.miaosha.domain.MiaoshaUser;
 import com.bushengshi.miaosha.redis.GoodsKey;
 import com.bushengshi.miaosha.redis.RedisService;
+import com.bushengshi.miaosha.result.Result;
 import com.bushengshi.miaosha.service.GoodsService;
 import com.bushengshi.miaosha.service.MiaoshaUserService;
+import com.bushengshi.miaosha.vo.GoodsDetailVo;
 import com.bushengshi.miaosha.vo.GoodsVo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -145,5 +147,43 @@ public class GoodsController {
         }
 
         return html;
+    }
+
+    /*
+    * 页面静态化
+    * 前端静态页面放在static目录下
+    * */
+    @RequestMapping(value = "/detail/{goodsId}")
+    @ResponseBody
+    public Result<GoodsDetailVo> toDetail2(Model model, HttpServletRequest request, HttpServletResponse response, MiaoshaUser user,
+                                           @PathVariable("goodsId") long goodsId) {
+
+        GoodsVo goods = goodsService.getGoodsVoByGoodsId(goodsId);
+
+        long startAt = goods.getStartDate().getTime();
+        long endAt = goods.getEndDate().getTime();
+        long now = System.currentTimeMillis();
+
+        int miaoshaStatus = 0;
+        int remainSeconds = 0;
+
+        if (now < startAt) { //秒杀还没开始，倒计时
+            miaoshaStatus = 0;
+            remainSeconds = (int) ((startAt - now) / 1000);
+        } else if (now > endAt) { //秒杀已经结束
+            miaoshaStatus = 2;
+            remainSeconds = -1;
+        } else { //秒杀正在进行中
+            miaoshaStatus = 1;
+            remainSeconds = 0;
+        }
+
+        GoodsDetailVo vo = new GoodsDetailVo();
+        vo.setGoods(goods);
+        vo.setUser(user);
+        vo.setMiaoshaStatus(miaoshaStatus);
+        vo.setRemainSeconds(remainSeconds);
+
+        return Result.success(vo);
     }
 }

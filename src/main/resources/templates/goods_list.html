@@ -2,11 +2,11 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>商品列表</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <!-- jquery -->
     <script type="text/javascript" th:src="@{/js/jquery.min.js}"></script>
     <!-- bootstrap -->
-    <link rel="stylesheet" type="text/css" th:href="@{/bootstrap/css/bootstrap.min.css}" />
+    <link rel="stylesheet" type="text/css" th:href="@{/bootstrap/css/bootstrap.min.css}"/>
     <script type="text/javascript" th:src="@{/bootstrap/js/bootstrap.min.js}"></script>
     <!-- jquery-validator -->
     <script type="text/javascript" th:src="@{/jquery-validation/jquery.validate.min.js}"></script>
@@ -16,7 +16,8 @@
     <!-- md5.js -->
     <script type="text/javascript" th:src="@{/js/md5.min.js}"></script>
     <!-- common.js -->
-    <script type="text/javascript" th:src="@{/js/common.js}"></script></head>
+    <script type="text/javascript" th:src="@{/js/common.js}"></script>
+</head>
 <body>
 <!--<p th:text="'hello:'+${user.nickname}"></p>-->
 
@@ -37,7 +38,9 @@
             <td th:text="${goods.goodsPrice}"></td>
             <td th:text="${goods.miaoshaPrice}"></td>
             <td th:text="${goods.stockCount}"></td>
-            <td><a th:href="'/goods/to_detail/'+${goods.id}">详情</a></td>
+            <!--<td><a th:href="'/goods/to_detail/'+${goods.id}">详情</a></td>-->
+            <!--跳转到静态页面            -->
+            <td><a th:href="'/goods_detail.htm?goodsId='+${goods.id}">详情</a></td>
         </tr>
     </table>
 </div>

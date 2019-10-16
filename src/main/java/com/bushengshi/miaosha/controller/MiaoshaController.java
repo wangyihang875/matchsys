@@ -5,6 +5,7 @@ import com.bushengshi.miaosha.domain.MiaoshaUser;
 import com.bushengshi.miaosha.domain.OrderInfo;
 import com.bushengshi.miaosha.redis.RedisService;
 import com.bushengshi.miaosha.result.CodeMsg;
+import com.bushengshi.miaosha.result.Result;
 import com.bushengshi.miaosha.service.GoodsService;
 import com.bushengshi.miaosha.service.MiaoshaService;
 import com.bushengshi.miaosha.service.MiaoshaUserService;
@@ -18,6 +19,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -67,5 +69,32 @@ public class MiaoshaController {
 
 
         return "order_detail";
+    }
+
+    /*
+    * GET POST区别
+    * GET不对服务端数据产生影响到请求用GET,对服务端数据产生影响的用POST
+    * */
+    @RequestMapping("/do_miaosha2")
+    @ResponseBody
+    public Result<OrderInfo> doMiaosha2(Model mode, MiaoshaUser user, @RequestParam("goodsId")long goodsId) {
+        if(user == null){
+            return Result.error(CodeMsg.SESSION_ERROR);
+        }
+        //判断库存
+        GoodsVo goods = goodsService.getGoodsVoByGoodsId(goodsId);
+        int stock = goods.getStockCount();
+        if(stock <= 0){
+            return Result.error(CodeMsg.MIAOSHA_OVER);
+        }
+        //判断是否已经秒杀到了
+        MiaoshaOrder order = orderService.getMiaoshaOrderByUserIdGoodsId(user.getId(),goodsId);
+        if(order != null){
+            return Result.error(CodeMsg.MIAOSHA_REPEAT);
+        }
+        //减库存 下订单 写入秒杀订单
+        OrderInfo orderInfo = miaoshaService.miaosha(user,goods);
+
+        return Result.success(orderInfo);
     }
 }
