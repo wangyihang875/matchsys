@@ -7,6 +7,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="matchsys" />
+        <module name="matchsys_git" />
       </profile>
     </annotationProcessing>
   </component>

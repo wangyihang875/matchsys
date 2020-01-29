@@ -1,6 +1,7 @@
 package com.bushengshi.miaosha.controller;
 
 import com.bushengshi.miaosha.domain.User;
+import com.bushengshi.miaosha.rabbitmq.MQSender;
 import com.bushengshi.miaosha.redis.RedisService;
 import com.bushengshi.miaosha.redis.UserKey;
 import com.bushengshi.miaosha.service.UserService;
@@ -22,6 +23,9 @@ public class DemoController {
 
     @Autowired
     RedisService redisService;
+
+    @Autowired
+    MQSender mqSender;
 
     @RequestMapping("/")
     @ResponseBody
@@ -48,6 +52,34 @@ public class DemoController {
     public String thymeleaf(Model model) {
         model.addAttribute("name", "bushengshi");
         return "hello";
+    }
+
+    @RequestMapping("/mq")
+    @ResponseBody
+    public Result<String> mq() {
+        mqSender.send("hello,wangyihang mq");
+        return Result.success("hello,wangyihang");
+    }
+
+    @RequestMapping("/mq/topic")
+    @ResponseBody
+    public Result<String> mqTopic() {
+        mqSender.sendTopic("hello,wangyihang topic");
+        return Result.success("hello,wangyihang");
+    }
+
+    @RequestMapping("/mq/fanout")
+    @ResponseBody
+    public Result<String> mqFanout() {
+        mqSender.sendFanout("hello,wangyihang fanout");
+        return Result.success("hello,wangyihang");
+    }
+
+    @RequestMapping("/mq/header")
+    @ResponseBody
+    public Result<String> header() {
+        mqSender.sendHeader("hello,wangyihang header");
+        return Result.success("hello,wangyihang ");
     }
 
     @RequestMapping("/db/get")
